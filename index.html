@@ -1,70 +1,131 @@
-<script>
-    // --- ESTADO DA APLICAÇÃO ---
-    let currentPrompt = '';
-    let displayedMovies = [];
-    const COMMENT_TRUNCATE_LENGTH = 180; 
-    let appDisplayLanguage = 'pt'; 
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIPOCA.I - Agente de Filmes com IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&family=Rubik+Pixels&display=swap" rel="stylesheet">
+    <style>
+        body { background:#110f10; color:#d9d4c8; font-family:'Poppins',sans-serif; }
+        body::before { content:""; position:fixed; top:0; left:0; width:100vw; height:100vh;
+            background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='); 
+            opacity:0.15; mix-blend-mode:screen; pointer-events:none; z-index:-1; }
+        .font-pixel{font-family:'Rubik Pixels',sans-serif;}
+        .font-main{font-family:'Poppins',sans-serif;}
+        .pipoca-glow{text-shadow:0 0 15px rgba(217,212,200,0.2),0 0 25px rgba(217,212,200,0.1);}
+        .prompt-input{background:transparent;border:1px solid #d9d4c8;border-radius:9999px;padding:.75rem 1.5rem;color:#d9d4c8;width:100%;text-transform:uppercase;font-weight:300;}
+        .prompt-input:disabled{opacity:.5;cursor:not-allowed;}
+        .prompt-input::placeholder{color:#8a867d;}
+        .prompt-input:focus{outline:none;border-color:#fff;}
+        .ai-button{background:transparent;border:none;color:#d9d4c8;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:color .3s;}
+        .ai-button:hover{color:#fff;}
+        .ai-button:disabled{opacity:.5;cursor:not-allowed;}
+        .movie-card{border:1px solid rgba(217,212,200,.3);border-radius:1.5rem;padding:1.5rem;background:rgba(17,15,16,.6);backdrop-filter:blur(8px);height:100%;display:flex;flex-direction:column;box-shadow:0 4px 10px rgba(0,0,0,.2);transition:transform .2s;}
+        .movie-card:hover{transform:translateY(-5px);}
+        .movie-poster{width:100%;max-width:100px;border-radius:.5rem;margin-bottom:1rem;object-fit:cover;align-self:center;}
+        .hidden{display:none;}
+        .fade-in{animation:fadeIn .7s ease-in-out;}
+        @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    </style>
+</head>
+<body class="antialiased font-main">
 
-    // --- CONSTANTES DE API ---
-    const OMDB_KEY = '62986a1f'; 
-    const TMDB_KEY = '188491e52fd2bdc583bba0b7a90bfda3'; 
-    const GEMINI_API_KEY = '__GEMINI_API_KEY__';  // placeholder para ser injetado pelo workflow
-    const WATCHMODE_API_KEY = 'Fc6ndanwCdU4wKQYbCLZLht8x79SfZFCp765TUTT'; 
+    <div id="app-container" class="min-h-screen w-full flex flex-col items-center justify-center p-4 lg:p-8">
+        <div id="screen1" class="w-full h-full flex flex-col items-center justify-center text-center fade-in">
+            <p class="font-main font-bold text-sm tracking-widest mb-4">FIND YOUR MOVIE</p>
+            <h1 class="font-pixel text-7xl md:text-9xl my-4 pipoca-glow">PIPOCA.I</h1>
+            <button id="start-button" class="ai-button font-main text-sm tracking-widest mt-8">CLICK HERE TO ASK THE AI</button>
+        </div>
 
-    // ...
+        <div id="main-content" class="w-full max-w-6xl hidden">
+            <header class="w-full flex justify-between items-center mb-12">
+                <h2 class="font-pixel text-3xl md:text-4xl pipoca-glow">PIPOCA.I</h2>
+                <p class="font-main font-bold text-xs tracking-widest">FIND YOUR MOVIE</p>
+            </header>
 
-    /**
-     * Usa Gemini para sugerir títulos de filmes e detectar idioma.
-     */
-    async function suggestTitlesWithGemini(prompt) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-        
-        const system = `Analise o idioma da descrição e retorne JSON no formato:
-        {"language":"pt|en","titles":["...", "...", "..."]}.
-        Sugira 4-6 FILMES REAIS, nada genérico.`;
+            <div id="prompt-section" class="w-full text-center mb-8 relative">
+                <p class="font-main text-sm tracking-widest uppercase">This is an AI Agent</p>
+                <p class="font-main text-lg mt-2 uppercase"><strong class="font-bold">Describe the type of movie you want to watch</strong></p>
+                <div class="mt-6 max-w-3xl mx-auto flex items-center gap-4">
+                    <input type="text" id="prompt-input" class="prompt-input font-main" placeholder="E.G., A SLAPSTICK COMEDY LIKE AMERICAN PIE">
+                    <button id="search-button" class="ai-button font-main text-sm tracking-widest">SEARCH</button>
+                </div>
+            </div>
 
-        const body = {
-            contents: [
-                {
-                    role: "user",
-                    parts: [{ text: `${system}\n\nDescrição: '${prompt}'` }]
-                }
-            ],
-            generationConfig: { response_mime_type: "application/json" }
-        };
+            <div id="results-section" class="w-full mt-12 flex flex-col items-center">
+                <div id="loader" class="text-center hidden"><p class="font-main tracking-widest">SEARCHING FOR MOVIES...</p></div>
+                <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start mx-auto"></div>
+                <div id="error-message" class="text-center hidden font-main text-red-400 mt-4"></div>
+            </div>
+        </div>
+    </div>
 
-        const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
+    <script>
+        let currentPrompt = '';
+        let displayedMovies = [];
+        const COMMENT_TRUNCATE_LENGTH = 180;
+        let appDisplayLanguage = 'pt';
+
+        const OMDB_KEY = '62986a1f'; 
+        const TMDB_KEY = '188491e52fd2bdc583bba0b7a90bfda3'; 
+        const GEMINI_API_KEY = '__GEMINI_API_KEY__'; // será injetado no deploy
+        const WATCHMODE_API_KEY = 'Fc6ndanwCdU4wKQYbCLZLht8x79SfZFCp765TUTT'; 
+
+        const screen1 = document.getElementById('screen1');
+        const mainContent = document.getElementById('main-content');
+        const startButton = document.getElementById('start-button');
+        const searchButton = document.getElementById('search-button');
+        const promptInput = document.getElementById('prompt-input');
+        const resultsGrid = document.getElementById('results-grid');
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('error-message');
+
+        startButton.addEventListener('click', () => {
+            screen1.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            mainContent.classList.add('fade-in');
         });
 
-        if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
-        const data = await res.json();
+        // Função Gemini
+        async function suggestTitlesWithGemini(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+            const system = `Analise o idioma da descrição e retorne JSON no formato:
+            {"language":"pt|en","titles":["...", "..."]}. Sugira 4-6 filmes reais.`;
 
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-        return JSON.parse(text);
-    }
+            const body = {
+                contents: [{ parts: [{ text: `${system}\n\nDescrição: '${prompt}'` }] }],
+                generationConfig: { response_mime_type: "application/json" }
+            };
 
-    // --- no fetchMovieResults ---
-    async function fetchMovieResults(prompt, excludeTitles) {
-        const moviesToReturn = [];
-        const sourceFilter = document.querySelector('input[name="source"]:checked').value;
-        const preferenceFilter = document.querySelector('input[name="preference"]:checked').value;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
 
-        // ...
-
-        // --- Usar Gemini para gerar títulos ---
-        let suggestedTitles = [];
-        try {
-            const result = await suggestTitlesWithGemini(prompt);
-            appDisplayLanguage = (result.language || '').toLowerCase().includes('pt') ? 'pt' : 'en';
-            suggestedTitles = Array.isArray(result.titles) ? result.titles : [];
-        } catch (e) {
-            console.error('Erro Gemini:', e);
-            suggestedTitles = [prompt]; // fallback
+            if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+            return JSON.parse(text);
         }
 
-        
-    }
-</script>
+        async function fetchMovieResults(prompt, excludeTitles) {
+            let suggestedTitles = [];
+            try {
+                const result = await suggestTitlesWithGemini(prompt);
+                appDisplayLanguage = (result.language || '').toLowerCase().includes('pt') ? 'pt' : 'en';
+                suggestedTitles = Array.isArray(result.titles) ? result.titles : [];
+            } catch (e) {
+                console.error('Erro Gemini:', e);
+                suggestedTitles = [prompt];
+            }
+
+            // TODO: aqui segue a lógica de OMDb, TMDB e Watchmode como já tinha no teu código
+            return [];
+        }
+    </script>
+</body>
+</html>
