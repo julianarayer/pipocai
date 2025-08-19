@@ -15,12 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Injeta a chave no HTML (substitui o placeholder)
-      - name: Inject GROQ key
+      # Injeta a chave Gemini no HTML (substitui o placeholder)
+      - name: Inject GEMINI key
         run: |
-          sed -i 's/__GROQ_API_KEY__/'"${{ secrets.GROQ_API_KEY }}"'/g' index.html
+          sed -i 's/__GEMINI_API_KEY__/'"${{ secrets.GEMINI_API_KEY }}"'/g' index.html
 
-      # Publica os arquivos como artefato pro Pages
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
