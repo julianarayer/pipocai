@@ -3,6 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,10 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Injeta a chave Gemini no HTML (substitui o placeholder)
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5  # recomendado
+        # sem inputs mesmo: só prepara metadados e base path
+
       - name: Inject GEMINI key
+        shell: bash
         run: |
-          sed -i 's/__GEMINI_API_KEY__/'"${{ secrets.GEMINI_API_KEY }}"'/g' index.html
+          # troca placeholder em .html e .js (delimitador | evita problemas com /)
+          for f in $(git ls-files '*.html' '*.js'); do
+            sed -i "s|__GEMINI_API_KEY__|${{ secrets.GEMINI_API_KEY }}|g" "$f"
+          done
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
