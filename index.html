@@ -1,131 +1,297 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIPOCA.I - Agente de Filmes com IA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&family=Rubik+Pixels&display=swap" rel="stylesheet">
-    <style>
-        body { background:#110f10; color:#d9d4c8; font-family:'Poppins',sans-serif; }
-        body::before { content:""; position:fixed; top:0; left:0; width:100vw; height:100vh;
-            background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='); 
-            opacity:0.15; mix-blend-mode:screen; pointer-events:none; z-index:-1; }
-        .font-pixel{font-family:'Rubik Pixels',sans-serif;}
-        .font-main{font-family:'Poppins',sans-serif;}
-        .pipoca-glow{text-shadow:0 0 15px rgba(217,212,200,0.2),0 0 25px rgba(217,212,200,0.1);}
-        .prompt-input{background:transparent;border:1px solid #d9d4c8;border-radius:9999px;padding:.75rem 1.5rem;color:#d9d4c8;width:100%;text-transform:uppercase;font-weight:300;}
-        .prompt-input:disabled{opacity:.5;cursor:not-allowed;}
-        .prompt-input::placeholder{color:#8a867d;}
-        .prompt-input:focus{outline:none;border-color:#fff;}
-        .ai-button{background:transparent;border:none;color:#d9d4c8;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:color .3s;}
-        .ai-button:hover{color:#fff;}
-        .ai-button:disabled{opacity:.5;cursor:not-allowed;}
-        .movie-card{border:1px solid rgba(217,212,200,.3);border-radius:1.5rem;padding:1.5rem;background:rgba(17,15,16,.6);backdrop-filter:blur(8px);height:100%;display:flex;flex-direction:column;box-shadow:0 4px 10px rgba(0,0,0,.2);transition:transform .2s;}
-        .movie-card:hover{transform:translateY(-5px);}
-        .movie-poster{width:100%;max-width:100px;border-radius:.5rem;margin-bottom:1rem;object-fit:cover;align-self:center;}
-        .hidden{display:none;}
-        .fade-in{animation:fadeIn .7s ease-in-out;}
-        @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>PIPOCA.I - Agente de Filmes com IA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&family=Rubik+Pixels&display=swap" rel="stylesheet">
+  <style>
+    body { background:#110f10; color:#d9d4c8; font-family:'Poppins',sans-serif; }
+    body::before { content:""; position:fixed; inset:0;
+      background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
+      opacity:.15; mix-blend-mode:screen; pointer-events:none; z-index:-1; }
+    .font-pixel{font-family:'Rubik Pixels',sans-serif;}
+    .font-main{font-family:'Poppins',sans-serif;}
+    .pipoca-glow{text-shadow:0 0 15px rgba(217,212,200,0.2),0 0 25px rgba(217,212,200,0.1);}
+    .prompt-input{background:transparent;border:1px solid #d9d4c8;border-radius:9999px;padding:.75rem 1.5rem;color:#d9d4c8;width:100%;text-transform:uppercase;font-weight:300;}
+    .prompt-input:disabled{opacity:.5;cursor:not-allowed;}
+    .prompt-input::placeholder{color:#8a867d;}
+    .prompt-input:focus{outline:none;border-color:#fff;}
+    .ai-button{background:transparent;border:none;color:#d9d4c8;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:color .3s;}
+    .ai-button:hover{color:#fff;}
+    .ai-button:disabled{opacity:.5;cursor:not-allowed;}
+    .movie-card{border:1px solid rgba(217,212,200,.3);border-radius:1.5rem;padding:1.5rem;background:rgba(17,15,16,.6);backdrop-filter:blur(8px);height:100%;display:flex;flex-direction:column;box-shadow:0 4px 10px rgba(0,0,0,.2);transition:transform .2s;}
+    .movie-card:hover{transform:translateY(-5px);}
+    .movie-poster{width:100%;max-width:100px;border-radius:.5rem;margin-bottom:1rem;object-fit:cover;align-self:center;}
+    .hidden{display:none;}
+    .fade-in{animation:fadeIn .7s ease-in-out;}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  </style>
 </head>
 <body class="antialiased font-main">
-
-    <div id="app-container" class="min-h-screen w-full flex flex-col items-center justify-center p-4 lg:p-8">
-        <div id="screen1" class="w-full h-full flex flex-col items-center justify-center text-center fade-in">
-            <p class="font-main font-bold text-sm tracking-widest mb-4">FIND YOUR MOVIE</p>
-            <h1 class="font-pixel text-7xl md:text-9xl my-4 pipoca-glow">PIPOCA.I</h1>
-            <button id="start-button" class="ai-button font-main text-sm tracking-widest mt-8">CLICK HERE TO ASK THE AI</button>
-        </div>
-
-        <div id="main-content" class="w-full max-w-6xl hidden">
-            <header class="w-full flex justify-between items-center mb-12">
-                <h2 class="font-pixel text-3xl md:text-4xl pipoca-glow">PIPOCA.I</h2>
-                <p class="font-main font-bold text-xs tracking-widest">FIND YOUR MOVIE</p>
-            </header>
-
-            <div id="prompt-section" class="w-full text-center mb-8 relative">
-                <p class="font-main text-sm tracking-widest uppercase">This is an AI Agent</p>
-                <p class="font-main text-lg mt-2 uppercase"><strong class="font-bold">Describe the type of movie you want to watch</strong></p>
-                <div class="mt-6 max-w-3xl mx-auto flex items-center gap-4">
-                    <input type="text" id="prompt-input" class="prompt-input font-main" placeholder="E.G., A SLAPSTICK COMEDY LIKE AMERICAN PIE">
-                    <button id="search-button" class="ai-button font-main text-sm tracking-widest">SEARCH</button>
-                </div>
-            </div>
-
-            <div id="results-section" class="w-full mt-12 flex flex-col items-center">
-                <div id="loader" class="text-center hidden"><p class="font-main tracking-widest">SEARCHING FOR MOVIES...</p></div>
-                <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start mx-auto"></div>
-                <div id="error-message" class="text-center hidden font-main text-red-400 mt-4"></div>
-            </div>
-        </div>
+  <div id="app-container" class="min-h-screen w-full flex flex-col items-center justify-center p-4 lg:p-8">
+    <div id="screen1" class="w-full h-full flex flex-col items-center justify-center text-center fade-in">
+      <p class="font-main font-bold text-sm tracking-widest mb-4">FIND YOUR MOVIE</p>
+      <h1 class="font-pixel text-7xl md:text-9xl my-4 pipoca-glow">PIPOCA.I</h1>
+      <button id="start-button" class="ai-button font-main text-sm tracking-widest mt-8">CLICK HERE TO ASK THE AI</button>
     </div>
 
-    <script>
-        let currentPrompt = '';
-        let displayedMovies = [];
-        const COMMENT_TRUNCATE_LENGTH = 180;
-        let appDisplayLanguage = 'pt';
+    <div id="main-content" class="w-full max-w-6xl hidden">
+      <header class="w-full flex justify-between items-center mb-12">
+        <h2 class="font-pixel text-3xl md:text-4xl pipoca-glow">PIPOCA.I</h2>
+        <p class="font-main font-bold text-xs tracking-widest">FIND YOUR MOVIE</p>
+      </header>
 
-        const OMDB_KEY = '62986a1f'; 
-        const TMDB_KEY = '188491e52fd2bdc583bba0b7a90bfda3'; 
-        const GEMINI_API_KEY = '__GEMINI_API_KEY__'; // será injetado no deploy
-        const WATCHMODE_API_KEY = 'Fc6ndanwCdU4wKQYbCLZLht8x79SfZFCp765TUTT'; 
+      <div id="prompt-section" class="w-full text-center mb-8 relative">
+        <p class="font-main text-sm tracking-widest uppercase">This is an AI Agent</p>
+        <p class="font-main text-lg mt-2 uppercase"><strong class="font-bold">Describe the type of movie you want to watch</strong></p>
+        <div class="mt-6 max-w-3xl mx-auto flex items-center gap-4">
+          <input type="text" id="prompt-input" class="prompt-input font-main" placeholder="E.G., A SLAPSTICK COMEDY LIKE AMERICAN PIE" />
+          <button id="search-button" class="ai-button font-main text-sm tracking-widest">SEARCH</button>
+        </div>
+      </div>
 
-        const screen1 = document.getElementById('screen1');
-        const mainContent = document.getElementById('main-content');
-        const startButton = document.getElementById('start-button');
-        const searchButton = document.getElementById('search-button');
-        const promptInput = document.getElementById('prompt-input');
-        const resultsGrid = document.getElementById('results-grid');
-        const loader = document.getElementById('loader');
-        const errorMessage = document.getElementById('error-message');
+      <div id="results-section" class="w-full mt-12 flex flex-col items-center">
+        <div id="loader" class="text-center hidden"><p class="font-main tracking-widest">SEARCHING FOR MOVIES...</p></div>
+        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start mx-auto"></div>
+        <div id="error-message" class="text-center hidden font-main text-red-400 mt-4"></div>
+      </div>
+    </div>
+  </div>
 
-        startButton.addEventListener('click', () => {
-            screen1.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-            mainContent.classList.add('fade-in');
+  <script>
+    // ===== State / Consts =====
+    const COMMENT_TRUNCATE_LENGTH = 180;
+    let appDisplayLanguage = 'pt';
+
+    // CHAVES — você pediu exposta: ok. (Depois você troca por secret.)
+    const OMDB_KEY = '62986a1f';
+    const TMDB_KEY = '188491e52fd2bdc583bba0b7a90bfda3';
+    const GEMINI_API_KEY = 'AIzaSyDBCL2FrIRX-rZD2iWgYWpPJvntFV-IcKE';
+    const WATCHMODE_API_KEY = 'Fc6ndanwCdU4wKQYbCLZLht8x79SfZFCp765TUTT';
+
+    // ===== DOM =====
+    const screen1 = document.getElementById('screen1');
+    const mainContent = document.getElementById('main-content');
+    const startButton = document.getElementById('start-button');
+    const searchButton = document.getElementById('search-button');
+    const promptInput = document.getElementById('prompt-input');
+    const resultsGrid = document.getElementById('results-grid');
+    const loader = document.getElementById('loader');
+    const errorMessage = document.getElementById('error-message');
+
+    startButton.addEventListener('click', () => {
+      screen1.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+      mainContent.classList.add('fade-in');
+      promptInput.focus();
+    });
+
+    // ENTER também dispara busca
+    promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') searchButton.click();
+    });
+
+    searchButton.addEventListener('click', async () => {
+      const q = promptInput.value?.trim();
+      if (!q) return;
+      resultsGrid.innerHTML = '';
+      errorMessage.classList.add('hidden');
+      loader.classList.remove('hidden');
+      try {
+        const movies = await fetchMovieResults(q);
+        if (!movies.length) {
+          errorMessage.textContent = 'Nenhum resultado. Ajuste a descrição e tente de novo.';
+          errorMessage.classList.remove('hidden');
+        } else {
+          renderResults(movies);
+        }
+      } catch (e) {
+        console.error(e);
+        errorMessage.textContent = 'Erro ao buscar filmes. Verifique as chaves de API e tente novamente.';
+        errorMessage.classList.remove('hidden');
+      } finally {
+        loader.classList.add('hidden');
+      }
+    });
+
+    // ===== Gemini: generateContent (REST v1beta) =====
+    // Doc oficial: endpoint + ?key=..., systemInstruction, responseMimeType/responseSchema (JSON Mode).  [oai_citation:4‡Google AI for Developers](https://ai.google.dev/api/generate-content)
+    async function suggestTitlesWithGemini(userPrompt) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+      const systemText = [
+        'Analise o idioma do usuário.',
+        'Responda APENAS JSON válido no formato:',
+        '{"language":"pt|en","titles":["t1","t2","t3","t4"]}',
+        'Sugira 4–6 filmes REAIS, existentes no TMDB/OMDb.'
+      ].join(' ');
+
+      const body = {
+        systemInstruction: { parts: [{ text: systemText }] },
+        contents: [{ parts: [{ text: userPrompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              language: { type: "STRING" },
+              titles: { type: "ARRAY", items: { type: "STRING" } }
+            },
+            required: ["titles"]
+          }
+        }
+      };
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      const parsed = JSON.parse(text);
+      appDisplayLanguage = (parsed.language || '').toLowerCase().includes('pt') ? 'pt' : 'en';
+      return Array.isArray(parsed.titles) ? parsed.titles : [];
+    }
+
+    // ===== Pipeline principal =====
+    async function fetchMovieResults(userPrompt) {
+      // 1) Títulos por Gemini (fallback = usar o próprio prompt)
+      let titles;
+      try { titles = await suggestTitlesWithGemini(userPrompt); }
+      catch (e) { console.warn('Gemini falhou, usando prompt como título.'); titles = [userPrompt]; }
+
+      const uniq = [...new Set(titles)].slice(0, 6);
+      const out = [];
+
+      for (const t of uniq) {
+        const tmdb = await searchTMDB(t);
+        if (!tmdb) continue;
+
+        // OMDb por imdb_id (preferência) e, se não vier, por título
+        const omdb = await fetchOMDbByImdbId(tmdb.imdb_id) || await fetchOMDbByTitle(tmdb.title);
+
+        // Watchmode por TMDB (formato "movie-{id}") com region BR
+        const providers = await fetchWatchmodeSourcesByTmdb(tmdb.id);
+
+        out.push({
+          title: tmdb.title || t,
+          year: tmdb.release_date ? tmdb.release_date.slice(0,4) : '',
+          poster: tmdb.poster_path ? `https://image.tmdb.org/t/p/w342${tmdb.poster_path}` : '',
+          overview: tmdb.overview || '',
+          ratings: extractRatings(omdb),
+          providers
         });
+      }
+      return out;
+    }
 
-        // Função Gemini
-        async function suggestTitlesWithGemini(prompt) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-            const system = `Analise o idioma da descrição e retorne JSON no formato:
-            {"language":"pt|en","titles":["...", "..."]}. Sugira 4-6 filmes reais.`;
+    // ===== TMDB =====
+    // Search movie + details (append external_ids p/ imdb_id). Docs oficiais.  [oai_citation:5‡The Movie Database (TMDB)](https://developer.themoviedb.org/reference/search-movie?utm_source=chatgpt.com)
+    async function searchTMDB(title) {
+      const q = encodeURIComponent(title);
+      const s = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${q}&include_adult=false&language=en-US`);
+      if (!s.ok) return null;
+      const sjson = await s.json();
+      const best = sjson.results?.[0];
+      if (!best) return null;
 
-            const body = {
-                contents: [{ parts: [{ text: `${system}\n\nDescrição: '${prompt}'` }] }],
-                generationConfig: { response_mime_type: "application/json" }
-            };
+      const d = await fetch(`https://api.themoviedb.org/3/movie/${best.id}?api_key=${TMDB_KEY}&append_to_response=external_ids&language=en-US`);
+      if (!d.ok) return { ...best };
+      const det = await d.json();
+      return { ...best, imdb_id: det?.external_ids?.imdb_id || null, title: det?.title || best?.title };
+    }
 
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
+    // ===== OMDb =====
+    // Doc oficial.  [oai_citation:6‡omdbapi.com](https://www.omdbapi.com/?utm_source=chatgpt.com)
+    async function fetchOMDbByImdbId(imdbId) {
+      if (!imdbId) return null;
+      const r = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_KEY}&i=${encodeURIComponent(imdbId)}`);
+      if (!r.ok) return null;
+      const j = await r.json();
+      return j?.Response === 'True' ? j : null;
+    }
+    async function fetchOMDbByTitle(title) {
+      const r = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_KEY}&t=${encodeURIComponent(title)}`);
+      if (!r.ok) return null;
+      const j = await r.json();
+      return j?.Response === 'True' ? j : null;
+    }
 
-            if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
-            const data = await res.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-            return JSON.parse(text);
-        }
+    // ===== Watchmode =====
+    // Aceita TMDB no formato movie-{id} e tem 'regions=BR'. Doc oficial.  [oai_citation:7‡Watchmode API](https://api.watchmode.com/docs)
+    async function fetchWatchmodeSourcesByTmdb(tmdbMovieId) {
+      try {
+        if (!tmdbMovieId) return [];
+        const titleKey = `movie-${tmdbMovieId}`;
+        const url = `https://api.watchmode.com/v1/title/${titleKey}/sources/?apiKey=${WATCHMODE_API_KEY}&regions=BR`;
+        const r = await fetch(url);
+        if (!r.ok) return [];
+        const j = await r.json();
+        const names = [...new Set(j
+          .filter(s => ['sub','free','paid','rent','buy'].includes(s.type))
+          .map(s => s.name)
+        )];
+        return names.slice(0, 6);
+      } catch { return []; }
+    }
 
-        async function fetchMovieResults(prompt, excludeTitles) {
-            let suggestedTitles = [];
-            try {
-                const result = await suggestTitlesWithGemini(prompt);
-                appDisplayLanguage = (result.language || '').toLowerCase().includes('pt') ? 'pt' : 'en';
-                suggestedTitles = Array.isArray(result.titles) ? result.titles : [];
-            } catch (e) {
-                console.error('Erro Gemini:', e);
-                suggestedTitles = [prompt];
-            }
+    function extractRatings(omdb) {
+      if (!omdb) return {};
+      const ratings = {};
+      if (omdb.imdbRating && omdb.imdbRating !== 'N/A') ratings.imdb = `${omdb.imdbRating}/10`;
+      const rt = (omdb.Ratings || []).find(r => r.Source === 'Rotten Tomatoes');
+      if (rt?.Value) ratings.rotten = rt.Value;
+      return ratings;
+    }
 
-            // TODO: aqui segue a lógica de OMDb, TMDB e Watchmode como já tinha no teu código
-            return [];
-        }
-    </script>
+    // ===== Render =====
+    function renderResults(list) {
+      resultsGrid.innerHTML = '';
+      for (const m of list) {
+        const card = document.createElement('div');
+        card.className = 'movie-card';
+
+        const img = document.createElement('img');
+        img.className = 'movie-poster';
+        img.src = m.poster || 'https://via.placeholder.com/150x225?text=No+Poster';
+        img.alt = m.title;
+
+        const title = document.createElement('h3');
+        title.className = 'font-main font-bold mb-1';
+        title.textContent = `${m.title}${m.year ? ' ('+m.year+')' : ''}`;
+
+        const overview = document.createElement('p');
+        overview.className = 'text-sm opacity-80';
+        overview.textContent = (m.overview || '').slice(0, COMMENT_TRUNCATE_LENGTH) +
+          ((m.overview || '').length > COMMENT_TRUNCATE_LENGTH ? '…' : '');
+
+        const rating = document.createElement('p');
+        rating.className = 'text-xs mt-2';
+        const parts = [];
+        if (m.ratings?.imdb) parts.push(`IMDb ${m.ratings.imdb}`);
+        if (m.ratings?.rotten) parts.push(`RT ${m.ratings.rotten}`);
+        rating.textContent = parts.join(' • ');
+
+        const providers = document.createElement('p');
+        providers.className = 'text-xs mt-1 opacity-80';
+        if (m.providers?.length) providers.textContent = `Onde assistir: ${m.providers.join(', ')}`;
+
+        card.appendChild(img);
+        card.appendChild(title);
+        card.appendChild(overview);
+        if (rating.textContent) card.appendChild(rating);
+        if (providers.textContent) card.appendChild(providers);
+
+        resultsGrid.appendChild(card);
+      }
+    }
+  </script>
 </body>
 </html>
