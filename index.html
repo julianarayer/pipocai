@@ -275,11 +275,11 @@
         let appDisplayLanguage = 'pt'; // Idioma padrão para exibição (normalizado para 'pt' ou 'en')
 
         // --- CONSTANTES DE API ---
-        const OMDB_KEY = '62986a1f';
-        const TMDB_KEY = '188491e52fd2bdc583bba0b7a90bfda3';
-        // *** TROCA: saiu GROQ_API_KEY, entrou GEMINI_API_KEY (exposta como você pediu) ***
-        const GEMINI_API_KEY = 'AIzaSyDBCL2FrIRX-rZD2iWgYWpPJvntFV-IcKE';
-        const WATCHMODE_API_KEY = 'Fc6ndanwCdU4wKQYbCLZLht8x79SfZFCp765TUTT';
+        const OMDB_KEY = '62986a1f'; 
+        const TMDB_KEY = '188491e52fd2bdc583bba0b7a90bfda3'; 
+        // >>>>>> Gemini: placeholder será trocado pelo workflow (sed) no deploy <<<<<<
+        const GEMINI_API_KEY = '__GEMINI_API_KEY__';
+        const WATCHMODE_API_KEY = 'Fc6ndanwCdU4wKQYbCLZLht8x79SfZFCp765TUTT'; 
 
         // --- ELEMENTOS DO DOM ---
         const screen1 = document.getElementById('screen1');
@@ -304,7 +304,7 @@
             screen1.classList.add('hidden');
             mainContent.classList.remove('hidden');
             mainContent.classList.add('fade-in');
-            checkApiKeys();
+            checkApiKeys(); // Verifica as chaves da API ao iniciar
         });
 
         function checkApiKeys() {
@@ -321,6 +321,9 @@
                 promptInput.placeholder = "E.G., A SLAPSTICK COMEDY LIKE AMERICAN PIE";
                 errorMessage.classList.add('hidden'); 
             }
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === '__GEMINI_API_KEY__') {
+                console.warn("GEMINI_API_KEY não está injetada. O passo de IA pode falhar.");
+            }
         }
 
         // --- LÓGICA DE BUSCA ---
@@ -331,8 +334,8 @@
                 return;
             }
             currentPrompt = prompt;
-            displayedMovies = [];
-            resultsGrid.innerHTML = '';
+            displayedMovies = []; // Reseta os filmes já exibidos para uma nova busca
+            resultsGrid.innerHTML = ''; // Limpa a grade de resultados
             fetchAndDisplayMovies();
         });
         
@@ -352,7 +355,7 @@
             }
         });
 
-        // --- Modal "Ler Mais" ---
+        // --- Lógica do Modal "Ler Mais" ---
         modalCloseButton.addEventListener('click', () => {
             readMoreModal.classList.add('hidden');
         });
@@ -361,23 +364,24 @@
             if (event.target.classList.contains('read-more-button')) {
                 const fullComment = event.target.dataset.fullComment;
                 modalCommentText.textContent = fullComment;
-                modalTitleComment.textContent = displayLabels[appDisplayLanguage].fullCommentTitle;
+                modalTitleComment.textContent = displayLabels[appDisplayLanguage].fullCommentTitle; // Atualiza o título do modal
                 readMoreModal.classList.remove('hidden');
             }
         });
 
 
         async function fetchAndDisplayMovies() {
-            loader.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
-            document.getElementById('search-more-container')?.remove();
+            loader.classList.remove('hidden'); // Mostra o loader
+            errorMessage.classList.add('hidden'); // Esconde mensagens de erro anteriores
+            document.getElementById('search-more-container')?.remove(); // Remove o botão "Search More" anterior
 
             try {
                 const newMovies = await fetchMovieResults(currentPrompt, displayedMovies);
-                loader.classList.add('hidden');
+                loader.classList.add('hidden'); // Esconde o loader
                 if (newMovies && newMovies.length > 0) {
+                    // Adiciona os novos filmes à lista de filmes já exibidos
                     displayedMovies.push(...newMovies.map(m => m.nome_do_filme));
-                    renderMovies(newMovies);
+                    renderMovies(newMovies); // Renderiza os novos filmes
                 } else {
                     showError("Desculpe, não foi possível encontrar mais filmes que correspondam à sua descrição.");
                 }
@@ -392,20 +396,27 @@
             let cardsHtml = movies.map(createMovieCard).join('');
             resultsGrid.innerHTML += cardsHtml;
             
+            // Cria e adiciona o botão "SEARCH MORE OPTIONS"
             const searchMoreContainer = document.createElement('div');
             searchMoreContainer.id = 'search-more-container';
             searchMoreContainer.className = 'h-full flex items-center justify-center font-main text-sm uppercase fade-in col-span-full';
             searchMoreContainer.innerHTML = `<button id="search-more-button" class="ai-button tracking-widest text-center">${displayLabels[appDisplayLanguage].searchMoreOptions}</button>`;
             resultsGrid.appendChild(searchMoreContainer);
 
+            // Adiciona event listener ao novo botão "Search More"
             document.getElementById('search-more-button').addEventListener('click', fetchAndDisplayMovies);
         }
 
+        /**
+         * Exibe uma mensagem de erro na interface.
+         * @param {string} message - A mensagem de erro a ser exibida.
+         */
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.classList.remove('hidden');
         }
 
+        // Objeto de rótulos para diferentes idiomas
         const displayLabels = {
             'pt': { 
                 released: 'LANÇAMENTO',
@@ -431,8 +442,13 @@
             }
         };
 
+        /**
+         * Cria o HTML para um único card de filme.
+         * @param {Object} movie - Objeto contendo os dados do filme.
+         * @returns {string} HTML do card do filme.
+         */
         function createMovieCard(movie) {
-            const currentLabels = displayLabels[appDisplayLanguage] || displayLabels['pt'];
+            const currentLabels = displayLabels[appDisplayLanguage] || displayLabels['pt']; // Fallback para português
             
             let sourceName = 'N/A';
             if (movie.url_da_fonte.includes('imdb')) {
@@ -443,9 +459,11 @@
                 sourceName = 'Letterboxd';
             }
 
+            // Define a URL do pôster ou um placeholder se não houver pôster válido
             const posterUrl = movie.poster_url && movie.poster_url !== 'N/A' ? movie.poster_url : 'https://placehold.co/100x150/110f10/d9d4c8?text=NO+POSTER';
 
             let criticRatingHtml = '';
+            // Exibe a nota do crítico apenas se a fonte não for Letterboxd
             if (sourceName !== 'Letterboxd') { 
                 criticRatingHtml = `
                     <div class="px-1">
@@ -455,6 +473,7 @@
                 `;
             }
 
+            // Lógica para truncar o comentário e adicionar botão "Ler Mais"
             const fullComment = movie.primeiro_comentario || 'No comment found.';
             let displayedComment = fullComment;
             let readMoreButtonHtml = '';
@@ -464,8 +483,10 @@
                 readMoreButtonHtml = `<button class="read-more-button text-xs text-blue-400 hover:text-blue-200 ml-1 normal-case" data-full-comment="${fullComment}">${currentLabels.readMore}</button>`;
             }
 
+            // Adiciona a seção "Where to Watch" se houver dados
             const whereToWatchHtml = movie.where_to_watch && movie.where_to_watch !== 'N/A' ? 
                 `<p class="text-xs font-light mb-4">${currentLabels.whereToWatch}: <span class="font-bold">${movie.where_to_watch}</span></p>` : '';
+
 
             return `
                 <div class="movie-card flex flex-col font-main text-sm uppercase fade-in">
@@ -473,7 +494,7 @@
                     <div class="flex flex-col">
                         <h3 class="font-bold text-lg mb-1">${movie.nome_do_filme || 'N/A'}</h3>
                         <p class="text-xs font-light mb-4">${currentLabels.released}: ${movie.quando_foi_lancado || 'N/A'}</p>
-                        ${whereToWatchHtml}
+                        ${whereToWatchHtml} <!-- Inserido aqui -->
                         <div class="my-4 text-xs">
                             <span class="font-light">${currentLabels.font}: </span>
                             <a href="${movie.url_da_fonte || '#'}" target="_blank" rel="noopener noreferrer" class="font-bold underline hover:text-white transition-colors">${sourceName}</a>
@@ -497,18 +518,19 @@
         /**
          * Orquestra a busca de filmes usando **Gemini** para sugestões (antes era Groq),
          * OMDb para detalhes, TMDB para reviews e Watchmode para onde assistir.
+         * @param {string} prompt - A descrição do filme fornecida pelo usuário.
+         * @param {Array<string>} excludeTitles - Títulos já exibidos para evitar duplicatas.
+         * @returns {Promise<Array<Object>>}
          */
         async function fetchMovieResults(prompt, excludeTitles) {
             const moviesToReturn = [];
             const sourceFilter = document.querySelector('input[name="source"]:checked').value;
             const preferenceFilter = document.querySelector('input[name="preference"]:checked').value;
 
+            // Verificações iniciais
             if (!OMDB_KEY) {
                 console.error("OMDB_KEY não está configurada.");
                 return [];
-            }
-            if (!GEMINI_API_KEY) {
-                console.error("GEMINI_API_KEY não está configurada. A busca de IA será limitada.");
             }
             if (!TMDB_KEY) {
                 console.warn("TMDB_KEY não configurada. Não será possível buscar reviews do TMDB.");
@@ -517,7 +539,7 @@
                 console.warn("WATCHMODE_API_KEY não configurada. Não será possível buscar onde assistir.");
             }
 
-            // --- PASSO 1: Usar **Gemini API** para sugerir títulos + detectar idioma ---
+            // --- PASSO 1: Usar **Gemini API** para gerar títulos e detectar idioma ---
             let suggestedTitles = [];
             try {
                 const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -574,23 +596,25 @@
                 suggestedTitles = [prompt]; 
             }
 
-            if (suggestedTitles.length === 0) return [];
+            if (suggestedTitles.length === 0) {
+                return [];
+            }
 
-            // --- PASSO 2: Buscar detalhes nas APIs ---
+            // --- PASSO 2: Usar os títulos sugeridos para buscar detalhes nas APIs ---
             let moviesFoundCount = 0;
             for (const title of suggestedTitles) {
-                if (moviesFoundCount >= 4) break;
+                if (moviesFoundCount >= 4) break; // Limita a 4 filmes no total por busca
 
-                // 2.1 OMDb por título
+                // 2.1 OMDb API: Busca por título exato para obter detalhes e IMDb ID
                 const omdbDetailUrl = `https://www.omdbapi.com/?t=${encodeURIComponent(title)}&type=movie&apikey=${OMDB_KEY}&tomatoes=true`;
                 const omdbDetailResponse = await fetch(omdbDetailUrl);
                 const omdbDetailData = await omdbDetailResponse.json();
 
                 if (omdbDetailData.Response === "False" || excludeTitles.includes(omdbDetailData.Title)) {
-                    continue;
+                    continue; // Pula se não encontrar ou se o filme já foi exibido
                 }
 
-                // 2.2 TMDB: achar id via imdb_id e pegar 1 review
+                // 2.2 TMDB API: Obter ID do filme TMDB para reviews (usando IMDb ID)
                 let tmdbReviewContent = 'N/A';
                 if (TMDB_KEY) {
                     const tmdbFindUrl = `https://api.themoviedb.org/3/find/${omdbDetailData.imdbID}?api_key=${TMDB_KEY}&external_source=imdb_id`;
@@ -608,7 +632,7 @@
                     }
                 }
 
-                // 2.3 Watchmode: onde assistir (ajuste a região se quiser)
+                // 2.3 Watchmode API: Obter informações de onde assistir (streaming)
                 let whereToWatch = 'N/A';
                 if (WATCHMODE_API_KEY && omdbDetailData.imdbID) {
                     const watchmodeUrl = `https://api.watchmode.com/v1/title/${omdbDetailData.imdbID}/details/?apiKey=${WATCHMODE_API_KEY}&append_to_response=sources`;
@@ -617,6 +641,7 @@
                         const watchmodeData = await watchmodeResponse.json();
 
                         if (watchmodeData.sources && watchmodeData.sources.length > 0) {
+                            // Ajuste de região se quiser BR:
                             const streamingSources = watchmodeData.sources
                                 .filter(source => 
                                     (source.type === 'sub' || source.type === 'buy' || source.type === 'rent') &&
@@ -634,7 +659,7 @@
                     }
                 }
 
-                // 2.4 Montagem do objeto final
+                // 2.4 Preparar dados do filme no formato solicitado
                 let notaCritica = 'N/A';
                 let notaAudiencia = 'N/A';
                 let urlDaFonte = `https://www.imdb.com/title/${omdbDetailData.imdbID}/`;
@@ -648,7 +673,7 @@
                     notaCritica = rtRating ? rtRating.Value : 'N/A';
                     notaAudiencia = omdbDetailData.imdbRating || 'N/A'; 
                 } else if (sourceFilter === 'Letterboxd') {
-                    notaCritica = 'N/A';
+                    notaCritica = 'N/A'; // Conforme solicitado
                     notaAudiencia = omdbDetailData.imdbRating || 'N/A';
                     urlDaFonte = `https://letterboxd.com/imdb/${omdbDetailData.imdbID}`;
                 }
@@ -666,8 +691,7 @@
                 moviesFoundCount++;
             }
 
-            // --- PASSO 3: ordenação por preferência ---
-            const preferenceFilter = document.querySelector('input[name="preference"]:checked').value;
+            // --- PASSO 3: Ordenar os filmes com base na preferência e retornar ---
             if (preferenceFilter !== 'none' && moviesToReturn.length > 1) {
                 moviesToReturn.sort((a, b) => {
                     let valA = 0, valB = 0;
@@ -678,7 +702,7 @@
                         valA = parseFloat(a.nota_audiencia) || 0;
                         valB = parseFloat(b.nota_audiencia) || 0;
                     }
-                    return valB - valA;
+                    return valB - valA; // Ordem decrescente
                 });
             }
             return moviesToReturn;
