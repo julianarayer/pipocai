@@ -1,297 +1,688 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>PIPOCA.I - Agente de Filmes com IA</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&family=Rubik+Pixels&display=swap" rel="stylesheet">
-  <style>
-    body { background:#110f10; color:#d9d4c8; font-family:'Poppins',sans-serif; }
-    body::before { content:""; position:fixed; inset:0;
-      background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
-      opacity:.15; mix-blend-mode:screen; pointer-events:none; z-index:-1; }
-    .font-pixel{font-family:'Rubik Pixels',sans-serif;}
-    .font-main{font-family:'Poppins',sans-serif;}
-    .pipoca-glow{text-shadow:0 0 15px rgba(217,212,200,0.2),0 0 25px rgba(217,212,200,0.1);}
-    .prompt-input{background:transparent;border:1px solid #d9d4c8;border-radius:9999px;padding:.75rem 1.5rem;color:#d9d4c8;width:100%;text-transform:uppercase;font-weight:300;}
-    .prompt-input:disabled{opacity:.5;cursor:not-allowed;}
-    .prompt-input::placeholder{color:#8a867d;}
-    .prompt-input:focus{outline:none;border-color:#fff;}
-    .ai-button{background:transparent;border:none;color:#d9d4c8;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:color .3s;}
-    .ai-button:hover{color:#fff;}
-    .ai-button:disabled{opacity:.5;cursor:not-allowed;}
-    .movie-card{border:1px solid rgba(217,212,200,.3);border-radius:1.5rem;padding:1.5rem;background:rgba(17,15,16,.6);backdrop-filter:blur(8px);height:100%;display:flex;flex-direction:column;box-shadow:0 4px 10px rgba(0,0,0,.2);transition:transform .2s;}
-    .movie-card:hover{transform:translateY(-5px);}
-    .movie-poster{width:100%;max-width:100px;border-radius:.5rem;margin-bottom:1rem;object-fit:cover;align-self:center;}
-    .hidden{display:none;}
-    .fade-in{animation:fadeIn .7s ease-in-out;}
-    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIPOCA.I - Agente de Filmes com IA</title>
+    <!-- Tailwind CSS CDN para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fontes Google para a estética do aplicativo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&family=Rubik+Pixels&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos globais do corpo da página */
+        body {
+            background-color: #110f10; /* Cor de fundo escura */
+            color: #d9d4c8; /* Cor do texto clara */
+            font-family: 'Poppins', sans-serif; /* Fonte principal */
+        }
+
+        /* Efeito de granulado sutil no fundo */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='); /* Pixel transparente */
+            opacity: 0.15;
+            mix-blend-mode: screen;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Estilo para a fonte do título "PIPOCA.I" */
+        .font-pixel {
+            font-family: 'Rubik Pixels', sans-serif;
+        }
+
+        /* Estilo para a fonte principal */
+        .font-main {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Efeito de brilho para o título "PIPOCA.I" */
+        .pipoca-glow {
+            text-shadow: 0 0 15px rgba(217, 212, 200, 0.2), 0 0 25px rgba(217, 212, 200, 0.1);
+        }
+
+        /* Estilos para o campo de input de prompt */
+        .prompt-input {
+            background-color: transparent;
+            border: 1px solid #d9d4c8;
+            border-radius: 9999px; /* Borda arredondada (pill shape) */
+            padding: 0.75rem 1.5rem;
+            color: #d9d4c8;
+            width: 100%;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+        .prompt-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .prompt-input::placeholder {
+            color: #8a867d;
+        }
+        .prompt-input:focus {
+            outline: none;
+            border-color: #fff;
+        }
+
+        /* Estilos para os botões da IA */
+        .ai-button {
+            background-color: transparent;
+            border: none;
+            color: #d9d4c8;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .ai-button:hover {
+            color: #fff;
+        }
+        .ai-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Estilos para os cards de filme (aesthetic Apple clean) */
+        .movie-card {
+            border: 1px solid rgba(217, 212, 200, 0.3); /* Borda suave e translúcida */
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            background-color: rgba(17, 15, 16, 0.6); /* Fundo semi-transparente */
+            backdrop-filter: blur(8px); /* Efeito de blur no fundo */
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+            transition: transform 0.2s ease-in-out; /* Transição para efeito hover */
+        }
+        .movie-card:hover {
+            transform: translateY(-5px); /* Efeito de elevação ao passar o mouse */
+        }
+        
+        /* Estilos para o pôster do filme */
+        .movie-poster {
+            width: 100%;
+            max-width: 100px; /* Pôster menor */
+            height: auto;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            align-self: center; /* Centraliza o pôster no card */
+        }
+
+        /* Classe utilitária para esconder elementos */
+        .hidden {
+            display: none;
+        }
+
+        /* Animação de fade-in */
+        .fade-in {
+            animation: fadeInAnimation 0.7s ease-in-out;
+        }
+        @keyframes fadeInAnimation {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Estilos para os grupos de filtro (botões de rádio) */
+        .filter-group label {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d9d4c8;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.75rem;
+        }
+        .filter-group input[type="radio"]:checked + label {
+            background-color: #d9d4c8;
+            color: #110f10;
+        }
+        .filter-group input[type="radio"] {
+            display: none;
+        }
+
+        /* Estilos para o Modal de "Ler Mais" */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #110f10;
+            color: #d9d4c8;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #d9d4c8;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body class="antialiased font-main">
-  <div id="app-container" class="min-h-screen w-full flex flex-col items-center justify-center p-4 lg:p-8">
-    <div id="screen1" class="w-full h-full flex flex-col items-center justify-center text-center fade-in">
-      <p class="font-main font-bold text-sm tracking-widest mb-4">FIND YOUR MOVIE</p>
-      <h1 class="font-pixel text-7xl md:text-9xl my-4 pipoca-glow">PIPOCA.I</h1>
-      <button id="start-button" class="ai-button font-main text-sm tracking-widest mt-8">CLICK HERE TO ASK THE AI</button>
-    </div>
 
-    <div id="main-content" class="w-full max-w-6xl hidden">
-      <header class="w-full flex justify-between items-center mb-12">
-        <h2 class="font-pixel text-3xl md:text-4xl pipoca-glow">PIPOCA.I</h2>
-        <p class="font-main font-bold text-xs tracking-widest">FIND YOUR MOVIE</p>
-      </header>
+    <div id="app-container" class="min-h-screen w-full flex flex-col items-center justify-center p-4 lg:p-8">
 
-      <div id="prompt-section" class="w-full text-center mb-8 relative">
-        <p class="font-main text-sm tracking-widest uppercase">This is an AI Agent</p>
-        <p class="font-main text-lg mt-2 uppercase"><strong class="font-bold">Describe the type of movie you want to watch</strong></p>
-        <div class="mt-6 max-w-3xl mx-auto flex items-center gap-4">
-          <input type="text" id="prompt-input" class="prompt-input font-main" placeholder="E.G., A SLAPSTICK COMEDY LIKE AMERICAN PIE" />
-          <button id="search-button" class="ai-button font-main text-sm tracking-widest">SEARCH</button>
+        <!-- Tela 1: Boas-vindas -->
+        <div id="screen1" class="w-full h-full flex flex-col items-center justify-center text-center fade-in">
+            <p class="font-main font-bold text-sm tracking-widest mb-4">FIND YOUR MOVIE</p>
+            <h1 class="font-pixel text-7xl md:text-9xl my-4 pipoca-glow">PIPOCA.I</h1>
+            <button id="start-button" class="ai-button font-main text-sm tracking-widest mt-8">CLICK HERE TO ASK THE AI</button>
         </div>
-      </div>
 
-      <div id="results-section" class="w-full mt-12 flex flex-col items-center">
-        <div id="loader" class="text-center hidden"><p class="font-main tracking-widest">SEARCHING FOR MOVIES...</p></div>
-        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start mx-auto"></div>
-        <div id="error-message" class="text-center hidden font-main text-red-400 mt-4"></div>
-      </div>
+        <!-- Tela 2 & 3: Conteúdo Principal -->
+        <div id="main-content" class="w-full max-w-6xl hidden">
+            <header class="w-full flex justify-between items-center mb-12">
+                <h2 class="font-pixel text-3xl md:text-4xl pipoca-glow">PIPOCA.I</h2>
+                <p class="font-main font-bold text-xs tracking-widest">FIND YOUR MOVIE</p>
+            </header>
+
+            <!-- Seção de Prompt e Filtros -->
+            <div id="prompt-section" class="w-full text-center mb-8 relative">
+                 <p class="font-main text-sm tracking-widest uppercase">This is an AI Agent</p>
+                <p class="font-main text-lg mt-2 uppercase">
+                    <strong class="font-bold">Describe the type of movie you want to watch</strong>
+                </p>
+
+                <div class="mt-6 max-w-3xl mx-auto flex items-center gap-4">
+                    <input type="text" id="prompt-input" class="prompt-input font-main" placeholder="E.G., A SLAPSTICK COMEDY LIKE AMERICAN PIE">
+                    <button id="search-button" class="ai-button font-main text-sm tracking-widest">SEARCH</button>
+                </div>
+
+                <!-- Botão para abrir/fechar o modal de filtro -->
+                <div class="flex justify-center my-6">
+                    <button id="filter-toggle-button" class="ai-button font-main text-sm tracking-widest">FILTER</button>
+                </div>
+
+                <!-- Modal/Dropdown de Filtro -->
+                <div id="filter-modal" class="hidden absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-[#110f10] p-6 rounded-xl shadow-lg z-20 border border-[#d9d4c8] w-11/12 md:w-auto">
+                    <div class="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 my-6">
+                        <div class="filter-group flex flex-wrap justify-center gap-2">
+                            <input type="radio" id="rotten" name="source" value="Rotten Tomatoes" checked>
+                            <label for="rotten">Rotten Tomatoes</label>
+                            <input type="radio" id="imdb" name="source" value="IMDB">
+                            <label for="imdb">IMDB</label>
+                            <input type="radio" id="letterboxd" name="source" value="Letterboxd">
+                            <label for="letterboxd">Letterboxd</label>
+                        </div>
+                        <div class="filter-group flex flex-wrap justify-center gap-2">
+                            <input type="radio" id="no_pref" name="preference" value="none" checked>
+                            <label for="no_pref">No Preference</label>
+                            <input type="radio" id="critic" name="preference" value="CRITIC'S FAVORITE">
+                            <label for="critic">Critic's Favorite</label>
+                            <input type="radio" id="public" name="preference" value="PUBLIC'S FAVORITE">
+                            <label for="public">Public's Favorite</label>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button id="close-filter-button" class="ai-button font-main text-sm tracking-widest">APPLY FILTERS</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Seção de Resultados -->
+            <div id="results-section" class="w-full mt-12 flex flex-col items-center">
+                <div id="loader" class="text-center hidden"><p class="font-main tracking-widest">SEARCHING FOR MOVIES...</p></div>
+                <!-- Grade de resultados centralizada e responsiva -->
+                <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start mx-auto">
+                    <!-- Cards e botão "SEARCH MORE" serão injetados aqui -->
+                </div>
+                <div id="error-message" class="text-center hidden font-main text-red-400 mt-4"></div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    // ===== State / Consts =====
-    const COMMENT_TRUNCATE_LENGTH = 180;
-    let appDisplayLanguage = 'pt';
+    <!-- Modal para "Ler Mais" (comentários longos) -->
+    <div id="read-more-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="modal-close-button" class="modal-close-button">&times;</button>
+            <h3 id="modal-title-comment" class="font-bold text-lg mb-4"></h3>
+            <p id="modal-comment-text" class="font-light text-sm leading-relaxed normal-case"></p>
+        </div>
+    </div>
 
-    // CHAVES — você pediu exposta: ok. (Depois você troca por secret.)
-    const OMDB_KEY = '62986a1f';
-    const TMDB_KEY = '188491e52fd2bdc583bba0b7a90bfda3';
-    const GEMINI_API_KEY = 'AIzaSyDBCL2FrIRX-rZD2iWgYWpPJvntFV-IcKE';
-    const WATCHMODE_API_KEY = 'Fc6ndanwCdU4wKQYbCLZLht8x79SfZFCp765TUTT';
+    <script>
+        // --- ESTADO DA APLICAÇÃO ---
+        let currentPrompt = '';
+        let displayedMovies = [];
+        const COMMENT_TRUNCATE_LENGTH = 180; // Limite de caracteres para o comentário antes de "Ler Mais"
+        let appDisplayLanguage = 'pt'; // Idioma padrão para exibição (normalizado para 'pt' ou 'en')
 
-    // ===== DOM =====
-    const screen1 = document.getElementById('screen1');
-    const mainContent = document.getElementById('main-content');
-    const startButton = document.getElementById('start-button');
-    const searchButton = document.getElementById('search-button');
-    const promptInput = document.getElementById('prompt-input');
-    const resultsGrid = document.getElementById('results-grid');
-    const loader = document.getElementById('loader');
-    const errorMessage = document.getElementById('error-message');
+        // --- CONSTANTES DE API ---
+        const OMDB_KEY = '62986a1f';
+        const TMDB_KEY = '188491e52fd2bdc583bba0b7a90bfda3';
+        // *** TROCA: saiu GROQ_API_KEY, entrou GEMINI_API_KEY (exposta como você pediu) ***
+        const GEMINI_API_KEY = 'AIzaSyDBCL2FrIRX-rZD2iWgYWpPJvntFV-IcKE';
+        const WATCHMODE_API_KEY = 'Fc6ndanwCdU4wKQYbCLZLht8x79SfZFCp765TUTT';
 
-    startButton.addEventListener('click', () => {
-      screen1.classList.add('hidden');
-      mainContent.classList.remove('hidden');
-      mainContent.classList.add('fade-in');
-      promptInput.focus();
-    });
+        // --- ELEMENTOS DO DOM ---
+        const screen1 = document.getElementById('screen1');
+        const mainContent = document.getElementById('main-content');
+        const startButton = document.getElementById('start-button');
+        const searchButton = document.getElementById('search-button');
+        const promptInput = document.getElementById('prompt-input');
+        const resultsGrid = document.getElementById('results-grid');
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('error-message');
+        const filterToggleButton = document.getElementById('filter-toggle-button');
+        const filterModal = document.getElementById('filter-modal');
+        const closeFilterButton = document.getElementById('close-filter-button');
+        const readMoreModal = document.getElementById('read-more-modal');
+        const modalCloseButton = document.getElementById('modal-close-button');
+        const modalCommentText = document.getElementById('modal-comment-text');
+        const modalTitleComment = document.getElementById('modal-title-comment');
 
-    // ENTER também dispara busca
-    promptInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') searchButton.click();
-    });
 
-    searchButton.addEventListener('click', async () => {
-      const q = promptInput.value?.trim();
-      if (!q) return;
-      resultsGrid.innerHTML = '';
-      errorMessage.classList.add('hidden');
-      loader.classList.remove('hidden');
-      try {
-        const movies = await fetchMovieResults(q);
-        if (!movies.length) {
-          errorMessage.textContent = 'Nenhum resultado. Ajuste a descrição e tente de novo.';
-          errorMessage.classList.remove('hidden');
-        } else {
-          renderResults(movies);
-        }
-      } catch (e) {
-        console.error(e);
-        errorMessage.textContent = 'Erro ao buscar filmes. Verifique as chaves de API e tente novamente.';
-        errorMessage.classList.remove('hidden');
-      } finally {
-        loader.classList.add('hidden');
-      }
-    });
-
-    // ===== Gemini: generateContent (REST v1beta) =====
-    // Doc oficial: endpoint + ?key=..., systemInstruction, responseMimeType/responseSchema (JSON Mode).  [oai_citation:4‡Google AI for Developers](https://ai.google.dev/api/generate-content)
-    async function suggestTitlesWithGemini(userPrompt) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-      const systemText = [
-        'Analise o idioma do usuário.',
-        'Responda APENAS JSON válido no formato:',
-        '{"language":"pt|en","titles":["t1","t2","t3","t4"]}',
-        'Sugira 4–6 filmes REAIS, existentes no TMDB/OMDb.'
-      ].join(' ');
-
-      const body = {
-        systemInstruction: { parts: [{ text: systemText }] },
-        contents: [{ parts: [{ text: userPrompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              language: { type: "STRING" },
-              titles: { type: "ARRAY", items: { type: "STRING" } }
-            },
-            required: ["titles"]
-          }
-        }
-      };
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-      const parsed = JSON.parse(text);
-      appDisplayLanguage = (parsed.language || '').toLowerCase().includes('pt') ? 'pt' : 'en';
-      return Array.isArray(parsed.titles) ? parsed.titles : [];
-    }
-
-    // ===== Pipeline principal =====
-    async function fetchMovieResults(userPrompt) {
-      // 1) Títulos por Gemini (fallback = usar o próprio prompt)
-      let titles;
-      try { titles = await suggestTitlesWithGemini(userPrompt); }
-      catch (e) { console.warn('Gemini falhou, usando prompt como título.'); titles = [userPrompt]; }
-
-      const uniq = [...new Set(titles)].slice(0, 6);
-      const out = [];
-
-      for (const t of uniq) {
-        const tmdb = await searchTMDB(t);
-        if (!tmdb) continue;
-
-        // OMDb por imdb_id (preferência) e, se não vier, por título
-        const omdb = await fetchOMDbByImdbId(tmdb.imdb_id) || await fetchOMDbByTitle(tmdb.title);
-
-        // Watchmode por TMDB (formato "movie-{id}") com region BR
-        const providers = await fetchWatchmodeSourcesByTmdb(tmdb.id);
-
-        out.push({
-          title: tmdb.title || t,
-          year: tmdb.release_date ? tmdb.release_date.slice(0,4) : '',
-          poster: tmdb.poster_path ? `https://image.tmdb.org/t/p/w342${tmdb.poster_path}` : '',
-          overview: tmdb.overview || '',
-          ratings: extractRatings(omdb),
-          providers
+        // --- NAVEGAÇÃO E INICIALIZAÇÃO ---
+        startButton.addEventListener('click', () => {
+            screen1.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            mainContent.classList.add('fade-in');
+            checkApiKeys();
         });
-      }
-      return out;
-    }
 
-    // ===== TMDB =====
-    // Search movie + details (append external_ids p/ imdb_id). Docs oficiais.  [oai_citation:5‡The Movie Database (TMDB)](https://developer.themoviedb.org/reference/search-movie?utm_source=chatgpt.com)
-    async function searchTMDB(title) {
-      const q = encodeURIComponent(title);
-      const s = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${q}&include_adult=false&language=en-US`);
-      if (!s.ok) return null;
-      const sjson = await s.json();
-      const best = sjson.results?.[0];
-      if (!best) return null;
+        function checkApiKeys() {
+            if (!OMDB_KEY || OMDB_KEY === '') {
+                searchButton.disabled = true;
+                promptInput.disabled = true;
+                filterToggleButton.disabled = true;
+                promptInput.placeholder = "CHAVE DA API OMDB AUSENTE";
+                showError("Erro: Chave da API OMDb não configurada. A funcionalidade de busca está desabilitada.");
+            } else {
+                searchButton.disabled = false;
+                promptInput.disabled = false;
+                filterToggleButton.disabled = false;
+                promptInput.placeholder = "E.G., A SLAPSTICK COMEDY LIKE AMERICAN PIE";
+                errorMessage.classList.add('hidden'); 
+            }
+        }
 
-      const d = await fetch(`https://api.themoviedb.org/3/movie/${best.id}?api_key=${TMDB_KEY}&append_to_response=external_ids&language=en-US`);
-      if (!d.ok) return { ...best };
-      const det = await d.json();
-      return { ...best, imdb_id: det?.external_ids?.imdb_id || null, title: det?.title || best?.title };
-    }
+        // --- LÓGICA DE BUSCA ---
+        searchButton.addEventListener('click', () => {
+            const prompt = promptInput.value;
+            if (prompt.trim() === '') {
+                showError('Por favor, insira uma descrição para o filme.');
+                return;
+            }
+            currentPrompt = prompt;
+            displayedMovies = [];
+            resultsGrid.innerHTML = '';
+            fetchAndDisplayMovies();
+        });
+        
+        promptInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') searchButton.click();
+        });
 
-    // ===== OMDb =====
-    // Doc oficial.  [oai_citation:6‡omdbapi.com](https://www.omdbapi.com/?utm_source=chatgpt.com)
-    async function fetchOMDbByImdbId(imdbId) {
-      if (!imdbId) return null;
-      const r = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_KEY}&i=${encodeURIComponent(imdbId)}`);
-      if (!r.ok) return null;
-      const j = await r.json();
-      return j?.Response === 'True' ? j : null;
-    }
-    async function fetchOMDbByTitle(title) {
-      const r = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_KEY}&t=${encodeURIComponent(title)}`);
-      if (!r.ok) return null;
-      const j = await r.json();
-      return j?.Response === 'True' ? j : null;
-    }
+        // --- LÓGICA DO FILTRO ---
+        filterToggleButton.addEventListener('click', () => {
+            filterModal.classList.toggle('hidden');
+        });
 
-    // ===== Watchmode =====
-    // Aceita TMDB no formato movie-{id} e tem 'regions=BR'. Doc oficial.  [oai_citation:7‡Watchmode API](https://api.watchmode.com/docs)
-    async function fetchWatchmodeSourcesByTmdb(tmdbMovieId) {
-      try {
-        if (!tmdbMovieId) return [];
-        const titleKey = `movie-${tmdbMovieId}`;
-        const url = `https://api.watchmode.com/v1/title/${titleKey}/sources/?apiKey=${WATCHMODE_API_KEY}&regions=BR`;
-        const r = await fetch(url);
-        if (!r.ok) return [];
-        const j = await r.json();
-        const names = [...new Set(j
-          .filter(s => ['sub','free','paid','rent','buy'].includes(s.type))
-          .map(s => s.name)
-        )];
-        return names.slice(0, 6);
-      } catch { return []; }
-    }
+        closeFilterButton.addEventListener('click', () => {
+            filterModal.classList.add('hidden');
+            if (currentPrompt.trim() !== '') {
+                searchButton.click();
+            }
+        });
 
-    function extractRatings(omdb) {
-      if (!omdb) return {};
-      const ratings = {};
-      if (omdb.imdbRating && omdb.imdbRating !== 'N/A') ratings.imdb = `${omdb.imdbRating}/10`;
-      const rt = (omdb.Ratings || []).find(r => r.Source === 'Rotten Tomatoes');
-      if (rt?.Value) ratings.rotten = rt.Value;
-      return ratings;
-    }
+        // --- Modal "Ler Mais" ---
+        modalCloseButton.addEventListener('click', () => {
+            readMoreModal.classList.add('hidden');
+        });
 
-    // ===== Render =====
-    function renderResults(list) {
-      resultsGrid.innerHTML = '';
-      for (const m of list) {
-        const card = document.createElement('div');
-        card.className = 'movie-card';
+        resultsGrid.addEventListener('click', (event) => {
+            if (event.target.classList.contains('read-more-button')) {
+                const fullComment = event.target.dataset.fullComment;
+                modalCommentText.textContent = fullComment;
+                modalTitleComment.textContent = displayLabels[appDisplayLanguage].fullCommentTitle;
+                readMoreModal.classList.remove('hidden');
+            }
+        });
 
-        const img = document.createElement('img');
-        img.className = 'movie-poster';
-        img.src = m.poster || 'https://via.placeholder.com/150x225?text=No+Poster';
-        img.alt = m.title;
 
-        const title = document.createElement('h3');
-        title.className = 'font-main font-bold mb-1';
-        title.textContent = `${m.title}${m.year ? ' ('+m.year+')' : ''}`;
+        async function fetchAndDisplayMovies() {
+            loader.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            document.getElementById('search-more-container')?.remove();
 
-        const overview = document.createElement('p');
-        overview.className = 'text-sm opacity-80';
-        overview.textContent = (m.overview || '').slice(0, COMMENT_TRUNCATE_LENGTH) +
-          ((m.overview || '').length > COMMENT_TRUNCATE_LENGTH ? '…' : '');
+            try {
+                const newMovies = await fetchMovieResults(currentPrompt, displayedMovies);
+                loader.classList.add('hidden');
+                if (newMovies && newMovies.length > 0) {
+                    displayedMovies.push(...newMovies.map(m => m.nome_do_filme));
+                    renderMovies(newMovies);
+                } else {
+                    showError("Desculpe, não foi possível encontrar mais filmes que correspondam à sua descrição.");
+                }
+            } catch (error) {
+                console.error("Erro na busca:", error);
+                loader.classList.add('hidden');
+                showError('Ocorreu um erro durante a busca. Por favor, tente novamente.');
+            }
+        }
 
-        const rating = document.createElement('p');
-        rating.className = 'text-xs mt-2';
-        const parts = [];
-        if (m.ratings?.imdb) parts.push(`IMDb ${m.ratings.imdb}`);
-        if (m.ratings?.rotten) parts.push(`RT ${m.ratings.rotten}`);
-        rating.textContent = parts.join(' • ');
+        function renderMovies(movies) {
+            let cardsHtml = movies.map(createMovieCard).join('');
+            resultsGrid.innerHTML += cardsHtml;
+            
+            const searchMoreContainer = document.createElement('div');
+            searchMoreContainer.id = 'search-more-container';
+            searchMoreContainer.className = 'h-full flex items-center justify-center font-main text-sm uppercase fade-in col-span-full';
+            searchMoreContainer.innerHTML = `<button id="search-more-button" class="ai-button tracking-widest text-center">${displayLabels[appDisplayLanguage].searchMoreOptions}</button>`;
+            resultsGrid.appendChild(searchMoreContainer);
 
-        const providers = document.createElement('p');
-        providers.className = 'text-xs mt-1 opacity-80';
-        if (m.providers?.length) providers.textContent = `Onde assistir: ${m.providers.join(', ')}`;
+            document.getElementById('search-more-button').addEventListener('click', fetchAndDisplayMovies);
+        }
 
-        card.appendChild(img);
-        card.appendChild(title);
-        card.appendChild(overview);
-        if (rating.textContent) card.appendChild(rating);
-        if (providers.textContent) card.appendChild(providers);
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
 
-        resultsGrid.appendChild(card);
-      }
-    }
-  </script>
+        const displayLabels = {
+            'pt': { 
+                released: 'LANÇAMENTO',
+                whereToWatch: 'ONDE ASSISTIR',
+                font: 'FONTE',
+                criticRating: 'NOTA CRÍTICA',
+                audienceRating: 'NOTA PÚBLICO',
+                topComment: 'PRINCIPAL COMENTÁRIO',
+                readMore: 'Ler Mais',
+                fullCommentTitle: 'Comentário Completo',
+                searchMoreOptions: 'BUSCAR<br>MAIS<br>OPÇÕES'
+            },
+            'en': {
+                released: 'RELEASED',
+                whereToWatch: 'WHERE TO WATCH',
+                font: 'FONT',
+                criticRating: 'CRITIC RATING',
+                audienceRating: 'AUDIENCE RATING',
+                topComment: 'TOP COMMENT',
+                readMore: 'Read More',
+                fullCommentTitle: 'Full Comment',
+                searchMoreOptions: 'SEARCH<br>MORE<br>OPTIONS'
+            }
+        };
+
+        function createMovieCard(movie) {
+            const currentLabels = displayLabels[appDisplayLanguage] || displayLabels['pt'];
+            
+            let sourceName = 'N/A';
+            if (movie.url_da_fonte.includes('imdb')) {
+                sourceName = 'IMDB';
+            } else if (movie.url_da_fonte.includes('rottentomatoes')) {
+                sourceName = 'Rotten Tomatoes';
+            } else if (movie.url_da_fonte.includes('letterboxd')) {
+                sourceName = 'Letterboxd';
+            }
+
+            const posterUrl = movie.poster_url && movie.poster_url !== 'N/A' ? movie.poster_url : 'https://placehold.co/100x150/110f10/d9d4c8?text=NO+POSTER';
+
+            let criticRatingHtml = '';
+            if (sourceName !== 'Letterboxd') { 
+                criticRatingHtml = `
+                    <div class="px-1">
+                        <p class="font-light text-[0.6rem] leading-tight">${currentLabels.criticRating}</p>
+                        <p class="font-bold text-2xl">${movie.nota_critica || 'N/A'}</p>
+                    </div>
+                `;
+            }
+
+            const fullComment = movie.primeiro_comentario || 'No comment found.';
+            let displayedComment = fullComment;
+            let readMoreButtonHtml = '';
+
+            if (fullComment.length > COMMENT_TRUNCATE_LENGTH) {
+                displayedComment = fullComment.substring(0, COMMENT_TRUNCATE_LENGTH) + '...';
+                readMoreButtonHtml = `<button class="read-more-button text-xs text-blue-400 hover:text-blue-200 ml-1 normal-case" data-full-comment="${fullComment}">${currentLabels.readMore}</button>`;
+            }
+
+            const whereToWatchHtml = movie.where_to_watch && movie.where_to_watch !== 'N/A' ? 
+                `<p class="text-xs font-light mb-4">${currentLabels.whereToWatch}: <span class="font-bold">${movie.where_to_watch}</span></p>` : '';
+
+            return `
+                <div class="movie-card flex flex-col font-main text-sm uppercase fade-in">
+                    <img src="${posterUrl}" alt="Poster do filme ${movie.nome_do_filme}" class="movie-poster" onerror="this.onerror=null;this.src='https://placehold.co/100x150/110f10/d9d4c8?text=NO+POSTER';">
+                    <div class="flex flex-col">
+                        <h3 class="font-bold text-lg mb-1">${movie.nome_do_filme || 'N/A'}</h3>
+                        <p class="text-xs font-light mb-4">${currentLabels.released}: ${movie.quando_foi_lancado || 'N/A'}</p>
+                        ${whereToWatchHtml}
+                        <div class="my-4 text-xs">
+                            <span class="font-light">${currentLabels.font}: </span>
+                            <a href="${movie.url_da_fonte || '#'}" target="_blank" rel="noopener noreferrer" class="font-bold underline hover:text-white transition-colors">${sourceName}</a>
+                        </div>
+                        <div class="flex justify-around mb-4 text-center">
+                            ${criticRatingHtml}
+                            <div class="px-1">
+                                <p class="font-light text-[0.6rem] leading-tight">${currentLabels.audienceRating}</p>
+                                <p class="font-bold text-2xl">${movie.nota_audiencia || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="font-light mb-2">${currentLabels.topComment}</p>
+                        <p class="font-light text-xs leading-relaxed normal-case">“${displayedComment}”${readMoreButtonHtml}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Orquestra a busca de filmes usando **Gemini** para sugestões (antes era Groq),
+         * OMDb para detalhes, TMDB para reviews e Watchmode para onde assistir.
+         */
+        async function fetchMovieResults(prompt, excludeTitles) {
+            const moviesToReturn = [];
+            const sourceFilter = document.querySelector('input[name="source"]:checked').value;
+            const preferenceFilter = document.querySelector('input[name="preference"]:checked').value;
+
+            if (!OMDB_KEY) {
+                console.error("OMDB_KEY não está configurada.");
+                return [];
+            }
+            if (!GEMINI_API_KEY) {
+                console.error("GEMINI_API_KEY não está configurada. A busca de IA será limitada.");
+            }
+            if (!TMDB_KEY) {
+                console.warn("TMDB_KEY não configurada. Não será possível buscar reviews do TMDB.");
+            }
+            if (!WATCHMODE_API_KEY) {
+                console.warn("WATCHMODE_API_KEY não configurada. Não será possível buscar onde assistir.");
+            }
+
+            // --- PASSO 1: Usar **Gemini API** para sugerir títulos + detectar idioma ---
+            let suggestedTitles = [];
+            try {
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+                const systemText = [
+                    'Analise o idioma da descrição do usuário.',
+                    'Responda APENAS JSON válido no formato:',
+                    '{"language":"pt|en","titles":["t1","t2","t3","t4"]}',
+                    'Sugira 4–6 filmes REAIS e populares o suficiente para existir no TMDB/OMDb.'
+                ].join(' ');
+
+                const body = {
+                    systemInstruction: { parts: [{ text: systemText }] },
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                language: { type: "STRING" },
+                                titles: { type: "ARRAY", items: { type: "STRING" } }
+                            },
+                            required: ["titles"]
+                        }
+                    }
+                };
+
+                const geminiResp = await fetch(geminiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!geminiResp.ok) {
+                    const errorText = await geminiResp.text();
+                    throw new Error(`Erro da API Gemini: ${geminiResp.status}. Corpo: ${errorText}`);
+                }
+
+                const data = await geminiResp.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                const parsed = JSON.parse(text);
+
+                if (parsed.language) {
+                    appDisplayLanguage = parsed.language.toLowerCase().includes('pt') ? 'pt' : 'en';
+                }
+                if (parsed.titles && Array.isArray(parsed.titles)) {
+                    suggestedTitles = parsed.titles;
+                } else {
+                    console.warn("A resposta do Gemini não continha um array 'titles'.");
+                    suggestedTitles = [prompt];
+                }
+            } catch (err) {
+                console.error("Erro ao chamar a API Gemini:", err);
+                suggestedTitles = [prompt]; 
+            }
+
+            if (suggestedTitles.length === 0) return [];
+
+            // --- PASSO 2: Buscar detalhes nas APIs ---
+            let moviesFoundCount = 0;
+            for (const title of suggestedTitles) {
+                if (moviesFoundCount >= 4) break;
+
+                // 2.1 OMDb por título
+                const omdbDetailUrl = `https://www.omdbapi.com/?t=${encodeURIComponent(title)}&type=movie&apikey=${OMDB_KEY}&tomatoes=true`;
+                const omdbDetailResponse = await fetch(omdbDetailUrl);
+                const omdbDetailData = await omdbDetailResponse.json();
+
+                if (omdbDetailData.Response === "False" || excludeTitles.includes(omdbDetailData.Title)) {
+                    continue;
+                }
+
+                // 2.2 TMDB: achar id via imdb_id e pegar 1 review
+                let tmdbReviewContent = 'N/A';
+                if (TMDB_KEY) {
+                    const tmdbFindUrl = `https://api.themoviedb.org/3/find/${omdbDetailData.imdbID}?api_key=${TMDB_KEY}&external_source=imdb_id`;
+                    const tmdbFindResponse = await fetch(tmdbFindUrl);
+                    const tmdbFindData = await tmdbFindResponse.json();
+
+                    if (tmdbFindData.movie_results && tmdbFindData.movie_results.length > 0) {
+                        const tmdbMovieId = tmdbFindData.movie_results[0].id;
+                        const tmdbReviewsUrl = `https://api.themoviedb.org/3/movie/${tmdbMovieId}/reviews?api_key=${TMDB_KEY}`;
+                        const tmdbReviewsResponse = await fetch(tmdbReviewsUrl);
+                        const tmdbReviewsData = await tmdbReviewsResponse.json();
+                        if (tmdbReviewsData.results && tmdbReviewsData.results.length > 0) {
+                            tmdbReviewContent = tmdbReviewsData.results[0].content;
+                        }
+                    }
+                }
+
+                // 2.3 Watchmode: onde assistir (ajuste a região se quiser)
+                let whereToWatch = 'N/A';
+                if (WATCHMODE_API_KEY && omdbDetailData.imdbID) {
+                    const watchmodeUrl = `https://api.watchmode.com/v1/title/${omdbDetailData.imdbID}/details/?apiKey=${WATCHMODE_API_KEY}&append_to_response=sources`;
+                    try {
+                        const watchmodeResponse = await fetch(watchmodeUrl);
+                        const watchmodeData = await watchmodeResponse.json();
+
+                        if (watchmodeData.sources && watchmodeData.sources.length > 0) {
+                            const streamingSources = watchmodeData.sources
+                                .filter(source => 
+                                    (source.type === 'sub' || source.type === 'buy' || source.type === 'rent') &&
+                                    source.region === 'US' // troque para 'BR' se quiser Brasil
+                                )
+                                .map(source => source.name)
+                                .filter((value, index, self) => self.indexOf(value) === index);
+
+                            if (streamingSources.length > 0) {
+                                whereToWatch = streamingSources.join(', ');
+                            }
+                        }
+                    } catch (watchmodeError) {
+                        console.error("Erro ao buscar onde assistir na Watchmode API:", watchmodeError);
+                    }
+                }
+
+                // 2.4 Montagem do objeto final
+                let notaCritica = 'N/A';
+                let notaAudiencia = 'N/A';
+                let urlDaFonte = `https://www.imdb.com/title/${omdbDetailData.imdbID}/`;
+                const posterUrl = omdbDetailData.Poster || 'N/A';
+
+                if (sourceFilter === 'IMDB') {
+                    notaCritica = omdbDetailData.Metascore || 'N/A';
+                    notaAudiencia = omdbDetailData.imdbRating || 'N/A';
+                } else if (sourceFilter === 'Rotten Tomatoes') {
+                    const rtRating = omdbDetailData.Ratings?.find(r => r.Source === 'Rotten Tomatoes');
+                    notaCritica = rtRating ? rtRating.Value : 'N/A';
+                    notaAudiencia = omdbDetailData.imdbRating || 'N/A'; 
+                } else if (sourceFilter === 'Letterboxd') {
+                    notaCritica = 'N/A';
+                    notaAudiencia = omdbDetailData.imdbRating || 'N/A';
+                    urlDaFonte = `https://letterboxd.com/imdb/${omdbDetailData.imdbID}`;
+                }
+
+                moviesToReturn.push({
+                    "nome_do_filme": omdbDetailData.Title || 'N/A',
+                    "quando_foi_lancado": omdbDetailData.Year || 'N/A',
+                    "nota_critica": notaCritica,
+                    "nota_audiencia": notaAudiencia,
+                    "primeiro_comentario": tmdbReviewContent,
+                    "url_da_fonte": urlDaFonte,
+                    "poster_url": posterUrl,
+                    "where_to_watch": whereToWatch
+                });
+                moviesFoundCount++;
+            }
+
+            // --- PASSO 3: ordenação por preferência ---
+            const preferenceFilter = document.querySelector('input[name="preference"]:checked').value;
+            if (preferenceFilter !== 'none' && moviesToReturn.length > 1) {
+                moviesToReturn.sort((a, b) => {
+                    let valA = 0, valB = 0;
+                    if (preferenceFilter === "CRITIC'S FAVORITE") {
+                        valA = parseFloat(a.nota_critica.replace('%', '')) || 0;
+                        valB = parseFloat(b.nota_critica.replace('%', '')) || 0;
+                    } else { // PUBLIC'S FAVORITE
+                        valA = parseFloat(a.nota_audiencia) || 0;
+                        valB = parseFloat(b.nota_audiencia) || 0;
+                    }
+                    return valB - valA;
+                });
+            }
+            return moviesToReturn;
+        }
+    </script>
 </body>
 </html>
